@@ -1,0 +1,67 @@
+import pkgutil
+
+import scrapy
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy_splash import SplashRequest
+from scrapy.http import Request
+from w3lib.url import safe_url_string
+
+
+URL_RESOURCE_NAME = 'alexa-1000-to-10000-scrapinghub.csv'
+
+EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
+
+class EmailItem(scrapy.Item):
+    email = scrapy.Field()
+    source = scrapy.Field()
+
+
+class EmailSpider(CrawlSpider):
+    name = 'email_spider'
+    http_user = 'e56a3bc2612e408b803a9c9df6fd0d24'
+
+    domainfile = pkgutil.get_data('emailSpider', URL_RESOURCE_NAME)
+    allowed_domains = [domain.strip() for domain in domainfile.splitlines()]
+    start_urls = ['http://{0}'.format(domain.strip()) for domain in allowed_domains]
+    #start_urls = ['http://dropbox.com']
+
+    def start_requests(self):
+    	for url in self.start_urls:
+    		request = SplashRequest(
+    			url, 
+    			self.parse,
+    			endpoint='render.html',
+    			args={
+    				'viewport':'full',
+    				'render_all': 1,
+    				'wait': 5,
+    				},
+    			)
+    		self.logger.info('Start Requests %s' % request.url)
+    		yield request
+
+    def parse(self, response):
+    	le = LinkExtractor(allow=('[Pp]rivacy.*',), unique=True)
+    	links = le.extract_links(response)
+    	for link in links:
+    		self.logger.info('--> Link: {0}'.format(safe_url_string(link.url)))
+    		yield Request(url=link.url, callback=self.parse_privacy_policy)
+
+    def parse_privacy_policy(self, response):
+        self.logger.info('--> Privacy policy page! {0}'.format(response.url))
+        selector = scrapy.Selector(response)
+        emails = list(set(selector.xpath('//body').re('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)')))
+
+        emailitems = []
+        for email in emails:  
+        	email = email.lower()  
+        	if not email.endswith(EMAIL_WRONG_SUFFIXES):
+        		if email.endswith('.'):
+        			email = email[:-1]
+	        	self.logger.info('--> Email: {0}'.format(email))
+	        	emailitem = EmailItem()
+	        	emailitem["email"] = email
+	        	emailitem["source"] = response.url
+	        	emailitems.append(emailitem)
+        return emailitems
