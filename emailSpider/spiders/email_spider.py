@@ -8,7 +8,7 @@ from scrapy.http import Request
 from w3lib.url import safe_url_string
 
 
-URL_RESOURCE_NAME = 'alexa-1000-to-10000-scrapinghub.csv'
+URL_RESOURCE_NAME = 'error-domains.csv'
 
 EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
 
@@ -22,13 +22,13 @@ class EmailSpider(CrawlSpider):
     http_user = 'e56a3bc2612e408b803a9c9df6fd0d24'
 
     domainfile = pkgutil.get_data('emailSpider', URL_RESOURCE_NAME)
-    allowed_domains = [domain.strip() for domain in domainfile.splitlines()]
-    start_urls = ['http://{0}'.format(domain.strip()) for domain in allowed_domains]
+    allowed_domains = [domain.decode('utf-8').strip() for domain in domainfile.splitlines()]
+    start_urls = ['http://{0}'.format(domain) for domain in allowed_domains]
     #start_urls = ['http://dropbox.com']
 
     def start_requests(self):
-    	for url in self.start_urls:
-    		request = SplashRequest(
+        for url in self.start_urls:
+            request = SplashRequest(
     			url, 
     			self.parse,
     			endpoint='render.html',
@@ -38,8 +38,8 @@ class EmailSpider(CrawlSpider):
     				'wait': 5,
     				},
     			)
-    		self.logger.info('Start Requests %s' % request.url)
-    		yield request
+            self.logger.info('Start Requests %s' % request.url)
+            yield request
 
     def parse(self, response):
     	le = LinkExtractor(allow=('[Pp]rivacy.*',), unique=True)
