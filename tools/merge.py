@@ -6,13 +6,14 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 COMPANY_SHEET_NAME = 'Companies'
 NEW_LIST_NAME = 'alexa-1k-company-emails.csv'
+CREDENTIALS_FILE = 'opt-out-8e22f0087b51.json'
 
 
 def mergeLists():
 	scope = ['https://spreadsheets.google.com/feeds',
 	         'https://www.googleapis.com/auth/drive']
 
-	credentials = ServiceAccountCredentials.from_json_keyfile_name('opt-out-c93ecd1b36c5.json', scope)
+	credentials = ServiceAccountCredentials.from_json_keyfile_name('opt-out-8e22f0087b51.json', scope)
 
 	gc = gspread.authorize(credentials)
 

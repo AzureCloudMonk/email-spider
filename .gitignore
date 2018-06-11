@@ -102,3 +102,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# credentials
+opt-out-8e22f0087b51.json
