@@ -9,8 +9,8 @@ from w3lib.url import safe_url_string
 
 
 URL_RESOURCE_NAME = 'error-domains.csv'
-
 EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
+
 
 class EmailItem(scrapy.Item):
     email = scrapy.Field()
@@ -24,7 +24,6 @@ class EmailSpider(CrawlSpider):
     domainfile = pkgutil.get_data('emailSpider', URL_RESOURCE_NAME)
     allowed_domains = [domain.decode('utf-8').strip() for domain in domainfile.splitlines()]
     start_urls = ['http://{0}'.format(domain) for domain in allowed_domains]
-    #start_urls = ['http://dropbox.com']
 
     def start_requests(self):
         for url in self.start_urls:
