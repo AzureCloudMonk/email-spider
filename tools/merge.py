@@ -41,7 +41,7 @@ def mergeLists():
 				print("Adding as new record.")
 				now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 				main_sheet.append_row([domain, display_name, search_terms, email, privacy_policy,'N',0, now])
-			time.sleep(3)
+			#time.sleep(3)
 		except gspread.exceptions.APIError as error:
 			print("RESOURCE_EXHAUSTED exception.")
 			time.sleep(110)
