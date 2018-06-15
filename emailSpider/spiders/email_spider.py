@@ -13,6 +13,7 @@ EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
 
 
 class EmailItem(scrapy.Item):
+    domain = scrapy.Field() 
     email = scrapy.Field()
     source = scrapy.Field()
 
@@ -45,7 +46,9 @@ class EmailSpider(CrawlSpider):
     	links = le.extract_links(response)
     	for link in links:
     		self.logger.info('--> Link: {0}'.format(safe_url_string(link.url)))
-    		yield Request(url=link.url, callback=self.parse_privacy_policy)
+    		request = Request(url=link.url, callback=self.parse_privacy_policy)
+            request.meta['domain'] = response.url[len('http://'):]
+            yield request
 
     def parse_privacy_policy(self, response):
         self.logger.info('--> Privacy policy page! {0}'.format(response.url))
@@ -60,6 +63,7 @@ class EmailSpider(CrawlSpider):
         			email = email[:-1]
 	        	self.logger.info('--> Email: {0}'.format(email))
 	        	emailitem = EmailItem()
+                emailitem["domain"] = response.meta['domain']
 	        	emailitem["email"] = email
 	        	emailitem["source"] = response.url
 	        	emailitems.append(emailitem)
