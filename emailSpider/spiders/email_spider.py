@@ -8,7 +8,7 @@ from scrapy.http import Request
 from w3lib.url import safe_url_string
 
 
-URL_RESOURCE_NAME = 'error-domains.csv'
+URL_RESOURCE_NAME = 'alexa-1000-to-10000-scrapinghub.csv'
 EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
 
 
@@ -45,8 +45,8 @@ class EmailSpider(CrawlSpider):
     	le = LinkExtractor(allow=('[Pp]rivacy.*',), unique=True)
     	links = le.extract_links(response)
     	for link in links:
-    		self.logger.info('--> Link: {0}'.format(safe_url_string(link.url)))
-    		request = Request(url=link.url, callback=self.parse_privacy_policy)
+            self.logger.info('--> Link: {0}'.format(safe_url_string(link.url)))
+            request = Request(url=link.url, callback=self.parse_privacy_policy)
             request.meta['domain'] = response.url[len('http://'):]
             yield request
 
@@ -54,17 +54,16 @@ class EmailSpider(CrawlSpider):
         self.logger.info('--> Privacy policy page! {0}'.format(response.url))
         selector = scrapy.Selector(response)
         emails = list(set(selector.xpath('//body').re('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)')))
-
         emailitems = []
-        for email in emails:  
-        	email = email.lower()  
-        	if not email.endswith(EMAIL_WRONG_SUFFIXES):
-        		if email.endswith('.'):
-        			email = email[:-1]
-	        	self.logger.info('--> Email: {0}'.format(email))
-	        	emailitem = EmailItem()
+        for email in emails:
+            email = email.lower()
+            if not email.endswith(EMAIL_WRONG_SUFFIXES):
+                if email.endswith('.'):
+                    email = email[:-1]
+                self.logger.info('--> Email: {0}'.format(email))
+                emailitem = EmailItem()
                 emailitem["domain"] = response.meta['domain']
-	        	emailitem["email"] = email
-	        	emailitem["source"] = response.url
-	        	emailitems.append(emailitem)
+                emailitem["email"] = email
+                emailitem["source"] = response.url
+                emailitems.append(emailitem)
         return emailitems
