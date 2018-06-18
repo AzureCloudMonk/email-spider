@@ -20,14 +20,16 @@ DOMAIN_2_COMPANY_NAME = {}
 
 
 def preProcess(inFile, outFile, domainFile):
-	results = []
+	complete_results = []
+	incomplete_results = []
 	domains_details = defaultdict(list)
 	rows = getRawList(inFile)
 
 	# index by domain
 	for row in rows:
-		email = row[1]
-		source = row[2]
+		domain = row[1]
+		email = row[2]
+		source = row[3]
 		domain = email[email.find('@')+1:]
 		if domain.startswith('www.'):
 			domain = domain[4:]
@@ -40,29 +42,31 @@ def preProcess(inFile, outFile, domainFile):
 	unresolved_names = 0
 	for domain, details in domains_details.items():
 		company_name = domain2CompanyName(domain, domainFile)
-		if len(details) == 1:
-			results.append({
-				'domain': domain, 
-				'company_name': company_name,
-				'email': details[0]['email'], 
-				'source': details[0]['source']
+		selection = selectEmail(details)
+		print("Reduced {0} emails to {1}.".format(len(details), len(selection)))
+		if len(selection) == 1 and company_name:
+			complete_results.append({
+				'Domain': domain, 
+				'Display Name': company_name,
+				'Search Terms': company_name,
+				'Email': selection[0]['email'], 
+				'Privacy Policy': selection[0]['source']
 				})
-		else: 
-			selection = selectEmail(details)
-			print("Reduced {0} emails to {1}.".format(len(details), len(selection)))
+		else: 			
 			for item in selection:
-				results.append({
-					'domain': domain, 
-					'company_name': company_name,
-					'email': item['email'], 
-					'source': item['source']
+				incomplete_results.append({
+					'Domain': domain, 
+					'Display Name': company_name,
+					'Search Terms': company_name,
+					'Email': item['email'], 
+					'Privacy Policy': item['source']
 					})
 			if len(selection) > 1:
 				unresolved_emails += 1
 		if not company_name:
 			unresolved_names += 1
 
-	generateOutput(results, outFile)
+	generateOutput(complete_results, incomplete_results, outFile)
 	print ("Output file generaed. Unresoled emails: {0}, unresolved names: {1}".format(unresolved_emails, unresolved_names))
 
 
@@ -107,17 +111,23 @@ def domain2CompanyName(domain, domainFile):
 		return None
 
 
-def generateOutput(rows, outFile):
-	with open(outFile, 'w') as csvfile:
-		fieldnames = ['domain', 'company_name', 'email', 'source']
+def generateOutput(complete_results, incomplete_results, outFile):
+	with open('{0}-complete.csv'.format(outFile), 'w') as csvfile:
+		fieldnames = ['Domain', 'Display Name', 'Search Terms', 'Email', 'Privacy Policy']
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		writer.writeheader()
-		for row in rows:
+		for row in complete_results:
+			writer.writerow(row)
+	with open('{0}-incomplete.csv'.format(outFile), 'w') as csvfile:
+		fieldnames = ['Domain', 'Display Name', 'Search Terms', 'Email', 'Privacy Policy']
+		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+		writer.writeheader()
+		for row in incomplete_results:
 			writer.writerow(row)
 
 
 def getArgs():
-	usage = 'pre-process-list.py -i <inputfile> -o <outputfile> -d <domainfile>'
+	usage = 'pre-process-list.py -i <inputfile> -o <outputfileprefix> -d <domainfile>'
 	inputfile = ''
 	outputfile = ''
 	domainfile = ''

@@ -7,7 +7,7 @@ setup(
     version      = '1.0',
     packages     = find_packages(),
     package_data={
-        'emailSpider': ['alexa-1000-to-10000-scrapinghub.csv']
+        'emailSpider': ['alexa-top-10000-100000-shub.csv']
     },
     entry_points = {'scrapy': ['settings = emailSpider.settings']},
     zip_safe=False,

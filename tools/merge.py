@@ -6,7 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 
 SHEET_NAME = 'Domains'
-NEW_LIST_NAME = 'alexa-1k-company-emails.csv'
+NEW_LIST_NAME = 'alexa-top-1000-to-10000-prossesed-has-company.csv'
 CREDENTIALS_FILE = 'opt-out-8e22f0087b51.json'
 
 
@@ -28,14 +28,14 @@ def mergeLists():
 			email = row['Email']
 			display_name = row['Display Name']
 			search_terms = row['Search Terms']
-			domain = email[email.find('@')+1:]
+			domain = row['Domain']
 			print('New list row - Policy: "{0}", Email "{1}", Display Name "{2}".'.format(privacy_policy,email,display_name))		
 
 			try:
 				cell = main_sheet.find(domain)
+				main_sheet.update_cell(cell.row, 2, display_name)
+				main_sheet.update_cell(cell.row, 3, search_terms)
 				main_sheet.update_cell(cell.row, 5, privacy_policy)
-				main_sheet.update_cell(cell.row, 3, search_terms)
-				main_sheet.update_cell(cell.row, 3, search_terms)
 				print("Updated row {0}.".format(cell.row))
 			except gspread.exceptions.CellNotFound:
 				print("Adding as new record.")

@@ -8,7 +8,7 @@ from scrapy.http import Request
 from w3lib.url import safe_url_string
 
 
-URL_RESOURCE_NAME = 'alexa-1000-to-10000-scrapinghub.csv'
+URL_RESOURCE_NAME = 'alexa-top-10000-100000-shub.csv'
 EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
 
 
