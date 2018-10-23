@@ -5,8 +5,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 
-SHEET_NAME = 'Domains'
-NEW_LIST_NAME = 'alexa-top-1000-to-10000-prossesed-has-company.csv'
+MAIN_SHEET_NAME = 'Domains'
+STAGING_SHEET_NAME = 'Domains-staging'
 CREDENTIALS_FILE = 'opt-out-8e22f0087b51.json'
 
 
@@ -18,8 +18,8 @@ def mergeLists():
 
 	gc = gspread.authorize(credentials)
 
-	main_sheet = gc.open(SHEET_NAME).sheet1
-	new_sheet = gc.open(NEW_LIST_NAME).sheet1
+	main_sheet = gc.open(MAIN_SHEET_NAME).sheet1
+	new_sheet = gc.open(STAGING_SHEET_NAME).sheet1
 	new_list = new_sheet.get_all_records()
 
 	for row in new_list:
@@ -29,7 +29,8 @@ def mergeLists():
 			display_name = row['Display Name']
 			search_terms = row['Search Terms']
 			domain = row['Domain']
-			print('New list row - Policy: "{0}", Email "{1}", Display Name "{2}".'.format(privacy_policy,email,display_name))		
+			print('New list row - Domain: "{0}", Policy: "{1}", Email "{2}", Display Name "{3}".'.format(
+				domain,privacy_policy,email,display_name))		
 
 			try:
 				cell = main_sheet.find(domain)

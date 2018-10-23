@@ -27,13 +27,13 @@ def preProcess(inFile, outFile, domainFile):
 
 	# index by domain
 	for row in rows:
-		domain = row[1]
-		email = row[2]
-		source = row[3]
-		domain = email[email.find('@')+1:]
+		domain = row[0]
+		email = row[1]
+		source = row[2]
+		page_type = row[3]
 		if domain.startswith('www.'):
 			domain = domain[4:]
-		domains_details[domain].append({'email': email, 'source': source})
+		domains_details[domain].append({'email': email, 'source': source, 'page_type': page_type})
 
 	print("Loaded a list of {0} domains.".format(len(domains_details.keys())))
 
@@ -43,6 +43,7 @@ def preProcess(inFile, outFile, domainFile):
 	for domain, details in domains_details.items():
 		company_name = domain2CompanyName(domain, domainFile)
 		selection = selectEmail(details)
+		privacy_policy = getPPLink(details)
 		print("Reduced {0} emails to {1}.".format(len(details), len(selection)))
 		if len(selection) == 1 and company_name:
 			complete_results.append({
@@ -50,7 +51,8 @@ def preProcess(inFile, outFile, domainFile):
 				'Display Name': company_name,
 				'Search Terms': company_name,
 				'Email': selection[0]['email'], 
-				'Privacy Policy': selection[0]['source']
+				'Privacy Policy': privacy_policy,
+				'Page Type': selection[0]['page_type']
 				})
 		else: 			
 			for item in selection:
@@ -59,7 +61,8 @@ def preProcess(inFile, outFile, domainFile):
 					'Display Name': company_name,
 					'Search Terms': company_name,
 					'Email': item['email'], 
-					'Privacy Policy': item['source']
+					'Privacy Policy': privacy_policy,
+					'Page Type': item['page_type']
 					})
 			if len(selection) > 1:
 				unresolved_emails += 1
@@ -76,6 +79,7 @@ def getRawList(inFile):
 		reader.__next__() # waste the header
 		return [list(x) for x in set(tuple(x) for x in reader)]
 
+
 def selectEmail(details):
 	highest_rank = None
 	chosen = None
@@ -90,6 +94,12 @@ def selectEmail(details):
 			chosen = [item]
 	return chosen if chosen else details
 
+
+def getPPLink(details):
+	for item in details:
+		if item['page_type'] == 'Privacy policy':
+			return item['source']
+	return ""
 
 def loadDomain2ComoanyNameLookup(domainFile):
 	global DOMAIN_2_COMPANY_NAME
@@ -113,13 +123,13 @@ def domain2CompanyName(domain, domainFile):
 
 def generateOutput(complete_results, incomplete_results, outFile):
 	with open('{0}-complete.csv'.format(outFile), 'w') as csvfile:
-		fieldnames = ['Domain', 'Display Name', 'Search Terms', 'Email', 'Privacy Policy']
+		fieldnames = ['Domain', 'Display Name', 'Search Terms', 'Email', 'Privacy Policy', 'Page Type']
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		writer.writeheader()
 		for row in complete_results:
 			writer.writerow(row)
 	with open('{0}-incomplete.csv'.format(outFile), 'w') as csvfile:
-		fieldnames = ['Domain', 'Display Name', 'Search Terms', 'Email', 'Privacy Policy']
+		fieldnames = ['Domain', 'Display Name', 'Search Terms', 'Email', 'Privacy Policy', 'Page Type']
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		writer.writeheader()
 		for row in incomplete_results:

@@ -11,11 +11,13 @@
 import logging
 
 BOT_NAME = 'emailSpider'
+SPLASH = True
+
 
 SPIDER_MODULES = ['emailSpider.spiders']
 NEWSPIDER_MODULE = 'emailSpider.spiders'
 
-USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'companyEmail (+http://www.yourdomain.com)'
@@ -24,7 +26,7 @@ USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+#CONCURRENT_REQUESTS = 1
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -48,15 +50,10 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable spider middlewares
 # See https://doc.scrapy.org/en/latest/topics/spider-middleware.html
-SPIDER_MIDDLEWARES = {
-    'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
-}
 
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy_splash.SplashCookiesMiddleware': 723,
-    'scrapy_splash.SplashMiddleware': 725,
     'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
 }
 
@@ -91,14 +88,24 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_EXPIRATION_SECS = 0
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
-DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
-HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
 
+LOG_LEVEL = logging.INFO
+LOG_FILE = 'scrapy.log'
 
 #Export as CSV Feed
 FEED_FORMAT = "csv"
-FEED_URI = "data/output/company-emails.csv"
+FEED_EXPORT_FIELDS = ['domain', 'email', 'source', 'page_type']
+FEED_URI = "emailSpider/data/output/company-emails.csv"
 
-SPLASH_URL = 'https://ipbkb1bg-splash.scrapinghub.com/'
-LOG_LEVEL = logging.INFO
-LOG_FILE = 'scrapy.log'
+
+if SPLASH:
+	DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
+	HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
+
+	#SPLASH_URL = 'https://ipbkb1bg-splash.scrapinghub.com/'
+	SPLASH_URL = 'http://localhost:8050/'
+	DOWNLOADER_MIDDLEWARES['scrapy_splash.SplashCookiesMiddleware'] = 723
+	DOWNLOADER_MIDDLEWARES['scrapy_splash.SplashMiddleware'] = 725
+	SPIDER_MIDDLEWARES = {
+    	'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
+	}

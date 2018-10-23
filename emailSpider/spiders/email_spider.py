@@ -6,64 +6,83 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy_splash import SplashRequest
 from scrapy.http import Request
 from w3lib.url import safe_url_string
+from emailSpider.settings import SPLASH
 
 
-URL_RESOURCE_NAME = 'alexa-top-10000-100000-shub.csv'
+URL_RESOURCE_NAME = 'data/input/alexa-top-1k-minus-done.csv'
 EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
+HTTP_PREFIX = 'http://'
+
+def make_request(url, callback):
+	if SPLASH:
+		return SplashRequest(
+			url, 
+			callback,
+			endpoint='render.html',
+			args={
+				'viewport':'full',
+				'render_all': 1,
+				'wait': .5,
+				},
+			)
+	else:
+		return Request(url=url, callback=callback)
 
 
 class EmailItem(scrapy.Item):
-    domain = scrapy.Field() 
-    email = scrapy.Field()
-    source = scrapy.Field()
+	domain = scrapy.Field() 
+	email = scrapy.Field()
+	source = scrapy.Field()
+	page_type = scrapy.Field()
 
 
 class EmailSpider(CrawlSpider):
-    name = 'email_spider'
-    http_user = 'e56a3bc2612e408b803a9c9df6fd0d24'
+	name = 'email_spider'
+	http_user = 'e56a3bc2612e408b803a9c9df6fd0d24'
 
-    domainfile = pkgutil.get_data('emailSpider', URL_RESOURCE_NAME)
-    allowed_domains = [domain.decode('utf-8').strip() for domain in domainfile.splitlines()]
-    start_urls = ['http://{0}'.format(domain) for domain in allowed_domains]
+	domainfile = pkgutil.get_data('emailSpider', URL_RESOURCE_NAME)
+	allowed_domains = [domain.decode('utf-8').strip() for domain in domainfile.splitlines()]
+	start_urls = ['{0}{1}'.format(HTTP_PREFIX, domain) for domain in allowed_domains]
 
-    def start_requests(self):
-        for url in self.start_urls:
-            request = SplashRequest(
-    			url, 
-    			self.parse,
-    			endpoint='render.html',
-    			args={
-    				'viewport':'full',
-    				'render_all': 1,
-    				'wait': 5,
-    				},
-    			)
-            self.logger.info('Start Requests %s' % request.url)
-            yield request
+	def start_requests(self):
+		for url in self.start_urls:
+			request = make_request(url, self.parse)
+			request.meta['domain'] =  url[len(HTTP_PREFIX):]
+			self.logger.info('Start Requests %s' % request.url)
+			yield request
 
-    def parse(self, response):
-    	le = LinkExtractor(allow=('[Pp]rivacy.*',), unique=True)
-    	links = le.extract_links(response)
-    	for link in links:
-            self.logger.info('--> Link: {0}'.format(safe_url_string(link.url)))
-            request = Request(url=link.url, callback=self.parse_privacy_policy)
-            request.meta['domain'] = response.url[len('http://'):]
-            yield request
+	def parse(self, response):
+		expressons = {
+			'[Pp]rivacy': 'Privacy policy',
+			'[Cc]ontact': 'Contact',
+			'[Tt]erms|T&C|T&c|t&c': 'T&Cs'
+		}
+		for expresson, page_type in expressons.items():
+			le = LinkExtractor(allow=(expresson), unique=True)
+			links = le.extract_links(response)
+			for link in links:
+				self.logger.info('--> {0} link: {1}'.format(page_type, safe_url_string(link.url)))
+				request = make_request(link.url, self.parse_page_for_emails)
+				request.meta['domain'] = response.meta['domain']
+				request.meta['page_type'] = page_type
+				yield request		
 
-    def parse_privacy_policy(self, response):
-        self.logger.info('--> Privacy policy page! {0}'.format(response.url))
-        selector = scrapy.Selector(response)
-        emails = list(set(selector.xpath('//body').re('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)')))
-        emailitems = []
-        for email in emails:
-            email = email.lower()
-            if not email.endswith(EMAIL_WRONG_SUFFIXES):
-                if email.endswith('.'):
-                    email = email[:-1]
-                self.logger.info('--> Email: {0}'.format(email))
-                emailitem = EmailItem()
-                emailitem["domain"] = response.meta['domain']
-                emailitem["email"] = email
-                emailitem["source"] = response.url
-                emailitems.append(emailitem)
-        return emailitems
+	def parse_page_for_emails(self, response):
+		self.logger.info('--> Crawled {0} page! {1}'.format(response.meta['page_type'], response.url))
+		selector = scrapy.Selector(response)
+		emails = list(set(selector.xpath('//body').re('([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)')))
+		emailitems = []
+		for email in emails:
+			email = email.lower()
+			if not email.endswith(EMAIL_WRONG_SUFFIXES):
+				if email.endswith('.'):
+					email = email[:-1]
+				self.logger.info('--> Email: {0}'.format(email))
+				emailitem = EmailItem()
+				emailitem["domain"] = response.meta['domain']
+				emailitem["email"] = email
+				emailitem["source"] = response.url
+				emailitem["page_type"] = response.meta['page_type']
+				emailitems.append(emailitem)
+		return emailitems
+
