@@ -12,6 +12,7 @@ import logging
 
 BOT_NAME = 'emailSpider'
 SPLASH = True
+CRAELERA = False
 
 
 SPIDER_MODULES = ['emailSpider.spiders']
@@ -109,3 +110,7 @@ if SPLASH:
 	SPIDER_MIDDLEWARES = {
     	'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
 	}
+if CRAELERA:
+	DOWNLOADER_MIDDLEWARES['scrapy_crawlera.CrawleraMiddleware'] = 610
+	CRAWLERA_ENABLED = True
+	CRAWLERA_APIKEY = 'a247c0035f6e489ca820c0f3d1fe9a37'
