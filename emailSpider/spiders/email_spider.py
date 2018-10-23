@@ -6,15 +6,17 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy_splash import SplashRequest
 from scrapy.http import Request
 from w3lib.url import safe_url_string
-from emailSpider.settings import SPLASH
+from emailSpider import settings
 
 
-URL_RESOURCE_NAME = 'data/input/alexa-top-1k-minus-done.csv'
+URL_RESOURCE_NAME = 'data/input/data-brokers4.csv'
 EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
 HTTP_PREFIX = 'http://'
+LUA_SOURCE = pkgutil.get_data('emailSpider', 'scripts/crawlera.lua').decode('utf-8')
+
 
 def make_request(url, callback):
-	if SPLASH:
+	if settings.SPLASH:
 		return SplashRequest(
 			url, 
 			callback,
@@ -22,8 +24,11 @@ def make_request(url, callback):
 			args={
 				'viewport':'full',
 				'render_all': 1,
+				'lua_source': LUA_SOURCE,
+				'crawlera_user': settings.CRAWLERA_APIKEY,
 				'wait': .5,
 				},
+			cache_args=['lua_source']
 			)
 	else:
 		return Request(url=url, callback=callback)
