@@ -2,8 +2,7 @@ function use_crawlera(splash)
     -- Make sure you pass your Crawlera API key in the 'crawlera_user' arg.
     -- Have a look at the file spiders/quotes-js.py to see how to do it.
     -- Find your Crawlera credentials in https://app.scrapinghub.com/
-    -- local user = splash.args.crawlera_user
-    local user = 'a247c0035f6e489ca820c0f3d1fe9a37'
+    local user = splash.args.crawlera_user
 
     local host = 'proxy.crawlera.com'
     local port = 8010

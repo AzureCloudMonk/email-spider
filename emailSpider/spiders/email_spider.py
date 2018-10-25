@@ -9,7 +9,7 @@ from w3lib.url import safe_url_string
 from emailSpider import settings
 
 
-URL_RESOURCE_NAME = 'data/input/data-brokers4.csv'
+URL_RESOURCE_NAME = 'data/input/alexa-top-1000-10000-unresolved.csv'
 EMAIL_WRONG_SUFFIXES = ('png', 'jpg')
 HTTP_PREFIX = 'http://'
 LUA_SOURCE = pkgutil.get_data('emailSpider', 'scripts/crawlera.lua').decode('utf-8')
